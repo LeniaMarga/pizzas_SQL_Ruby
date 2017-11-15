@@ -2,10 +2,23 @@ require('pry-byebug')
 require_relative('models/pizza_order')
 require_relative('models/customer')
 
-Customer.delete_all()
+PizzaOrder.delete_all()##first you delete the one with the reference
+Customer.delete_all()##then you delete the customers
 
 customer1 = Customer.new({ 'name' => 'Zsolt' })
 customer1.save()
+
+ order1 = PizzaOrder.new(
+   { 'customer_id'=> customer1.id,
+     'quantity'=> '1',
+     'topping'=> 'Napoli'}
+   )
+
+order1.save
+
+customers = Customer.all()
+order1.customer
+order1.customer[0].pizza_orders
 
 binding.pry
 nil

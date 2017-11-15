@@ -15,6 +15,7 @@ class PizzaOrder
   end
 
   def save
+    db = PG.connect({dbname: 'pizza_orders', host: 'localhost'})##DRY: don't repeat your self
     sql = "INSERT INTO pizza_orders(
     quantity,
     topping,
@@ -24,33 +25,49 @@ class PizzaOrder
     $1, $2, $3
     )
     RETURNING * "
-    values = [@quantity, @topping, @customer_id]
-    @id = SqlRunner.run(sql, values)[0]["id"].to_i
+    values = [@quantity, @topping, @customer_id ]
+    db.prepare("save", sql)
+    @id = db.exec_prepared("save", values)[0]["id"].to_i
+    db.close
   end
 
   def self.all
+    db = PG.connect({dbname: 'pizza_orders', host: 'localhost'})
     sql = "SELECT * FROM pizza_orders"
     values = []
-    orders = SqlRunner.run(sql, values)
+    db.prepare("all", sql)
+    orders = db.exec_prepared("all", values)
+    db.close
     return orders.map {|order| PizzaOrder.new(order)}
   end
 
   def self.delete_all
+    db = PG.connect({dbname: 'pizza_orders', host: 'localhost'})
     sql = "DELETE FROM pizza_orders"
-    SqlRunner.run(sql)
+    db.prepare("delete_all",sql)
+    db.exec_prepared("delete_all")
+    db.close
   end
 
-  def delete
+  def delete(id)
+    db = PG.connect({dbname: 'pizza_orders', host: 'localhost'})
     sql = "DELETE FROM pizza_orders WHERE id = $1"
     values = [@id]
-    SqlRunner.run(sql, values)
+    db.prepare("delete", sql)
+    db.exec_prepared("delete")
+    db.close
   end
 
-  def update
+  def update # we call that in the concole
+    db = PG.connect( {dbname: 'pizza_orders', host: 'localhost'} )
+    #sql = "UPDATE pizza_orders SET (first_name, last_name, quantity, topping) = ("Sian", "RD", "Peperoni", 3)
+    #WHERE id = 3"
     sql = "UPDATE pizza_orders SET (first_name, last_name, topping, quantity) = ($1, $2, $3, $4)
     WHERE id = $5"
     values = [@first_name, @last_name, @topping, @quantity, @id]
-    deleted_order = SqlRunner(sql, values)
+    db.prepare("myupdate", sql)
+    deleted_order = db.exec_prepared("myupdate", values)
+    db.close
   end
 
   def customer()
